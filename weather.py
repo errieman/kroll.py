@@ -1,109 +1,127 @@
 #!/usr/bin/python
-appinfo = """
+"""
 WEERHOOFDEN
 -------------------------------------------------------------------------------
 get the current weather information at your location
 
 author: Erwin Hager <errieman@gmail.com>
-version: 0.9.6
+version: 0.9.10
 
 --- Usage ---
 
-weather [ -f | -v | -l <city> ]
+weather [ -f | -v | -c <city> ]
 
-  -f  force new request.
-  -v  verbose mode.
-  -l  city name ( weather -l Leeuwarden ).
-      The city name only has to be set once.
+  -f, --force    force new request.
+  -v, --verbose  verbose mode.
+  -c, --city     city name ( weather -l Leeuwarden ).
+                 The city name only needs to be set once.
 
-New data will be fetched every 15 minutes, before that the data will be read
-from local storage. (use -f to override this)
+New data will only be fetched 15 minutes after the last call, before
+that the data will be read from local storage. (use -f to override this)
 """
+
+__version__ = '0.9.10'
+__author__ = 'Erwin Hager <errieman@gmail.com>'
 
 import requests
 import time
 import json
 import sys
 import os
-
 import cPickle as pickle
 
-if getattr(sys, 'frozen', False):
-    application_path = os.path.dirname(sys.executable)
-elif __file__:
-    application_path = os.path.dirname(__file__)
+from optparse import OptionParser
 
-cargs = sys.argv
-r_proxies =  {}
-make_request = False
-verbose = False
-pickle_file = os.path.join(application_path, "weather.pickle")
-weather = ''
-city = ''
+VERBOSE = False
 
-def log(message):
-  if verbose:
-    print '* ' + message
+def main():
+  """Main method"""
+  optp = OptionParser(add_help_option=False)
+  optp.add_option('-c', '--city')
+  optp.add_option('-v', '--verbose', action='store_true')
+  optp.add_option('-f', '--force', action='store_true')
+  optp.add_option('-p', '--proxy')
+  optp.add_option('-r', '--raw', action='store_true')
+  optp.add_option('-h', '--help', action='store_true')
+  (options, args) = optp.parse_args()
+  global VERBOSE
+  VERBOSE = options.verbose
+  if options.help:
+    print __doc__
+    return
+  print GetWeather(options)
 
-if '-h' in cargs:
-  print appinfo
-  exit(0)
-if '-l' in cargs:
-  city = cargs[cargs.index('-l') + 1]
-  make_request = True
-if '-v' in cargs:
-  verbose = True
-  log('verbose mode enabled')
-if '-f' in cargs:
-  make_request = True
-  log('will force request')
-if '-p' in cargs:
-  r_proxies = {'http': 'http://%s/' % cargs[cargs.index('-p') + 1]}
-  log('set proxy to ' + cargs[cargs.index('-p') + 1])
-if not os.path.exists(pickle_file):
-  log('pickle file not present')
-  thefile = open(pickle_file, 'wb')
-  pickle.dump({"lastrequest": -1, "city": city, "weather_data": {} }, thefile)
-  thefile.close()
-try:
-  thefile = open(pickle_file, 'rb')
-  data = pickle.load(thefile)
-  if data['city'] == '' and city == '':
-    log('no city provided, guessing location')
-  elif city == '':
-    city = data['city']
-  log("%d minutes since last request (%s)" % ((time.time() - data['lastrequest']) / 60, time.ctime(data['lastrequest'])))
-  if time.time() - data['lastrequest'] >= 900:
-    log('I\'ve waited long enough')
-    make_request = True
-    thefile.close()
-except Exception, e:
-  log('error, making request anyway just to be sure (' + str(e) + ')')
-  make_request = True
+def GetWeather(options):
+  """return weather as string"""
+  pickle_file = os.path.join(GetAppPath(), "weather.pickle")
+  PrintV('Last request %s minutes ago' % str(time.time() - GetLastTime() / 60))
+  if time.time() - GetLastTime() >= 900 or options.force:
+    PrintV('making new request')
+    weather = FetchWeather(proxy=options.proxy, city=options.city)
+  else:
+    PrintV('no need for new request')
+    weather = pickle.load(open(pickle_file, 'rb'))['weather_data']
+  return WeatherToString(weather) if not options.raw else weather
 
+def FetchWeather(proxy='', city=''):
+  """Fetch weather from api server"""
+  PrintV('fetching weather')
+  pickle_file = os.path.join(GetAppPath(), "weather.pickle")
+  response = requests.get(('http://api.openweathermap.org/data/2.5/weather?'
+                           'q=%s&'
+                           'units=metric&'
+                           'APPID=5bfe42c795bc9f9598fce303e7aee224') % 
+                            GetCity(city),
+                   proxies={'http': proxy})
+  data = json.loads(response.text)
+  pickle.dump({'lastrequest': time.time(),
+      'city': GetCity(city),
+      'weather_data': data}, open(pickle_file, 'wb'))
+  return data
 
-if make_request:
-  log('making new request for some reason')
-  r = requests.get('http://api.openweathermap.org/data/2.5/weather?q=%s&units=metric&APPID=5bfe42c795bc9f9598fce303e7aee224' % city,
-                   proxies=r_proxies)
+def WeatherToString(weather):
+  """Format the weather into a Printable string"""
+  PrintV('formatting weather')
+  return (u"temp: {main[temp]} \u00b0C ({main[temp_min]} \u00b0C - "
+          u"{main[temp_max]} \u00b0C)\n"
+          u"wind: {wind[speed]} Km/h ({wind[deg]}\u00b0)\n"
+          u"humidity: {main[humidity]}%\n\n"
+          u"description: {weather[0][description]}"
+          ).encode('utf8').format(**weather)
 
-  weather = json.loads(r.text)
+def GetCity(city):
+  """get city"""
+  pickle_file = os.path.join(GetAppPath(), "weather.pickle")
+  if not city:
+    if os.path.exists(pickle_file):
+      city = pickle.load(open(pickle_file, 'rb'))['city']
+      PrintV('city = %s' % city)
+      if city:
+        return city
+    print('No city name provided (use weather -c <city>)')
+    exit(0)
+  else:
+    return city
 
-  pickle_data = { "lastrequest": time.time(), "city": city, "weather_data": weather }
-  thefile = open(pickle_file, 'wb')
-  pickle.dump(pickle_data, thefile)
-else:
-  log('reading weather data from local storage')
-  thefile = open(pickle_file, 'rb')
-  weather = pickle.load(thefile)['weather_data']
-  thefile.close()
+def GetLastTime():
+  """Last request time"""
+  pickle_file = os.path.join(GetAppPath(), "weather.pickle")
+  if os.path.exists(pickle_file):
+    return pickle.load(open(pickle_file, 'rb'))['lastrequest']
+  else:
+    return 1000
 
-printweather = u"""temp: {main[temp]} \u00b0C ({main[temp_min]} \u00b0C - {main[temp_max]} \u00b0C)
-wind: {wind[speed]} Km/h ({wind[deg]} \u00b0)
-humidity: {main[humidity]}%
+def PrintV(msg):
+  """verbose messages"""
+  if VERBOSE:
+    print('* ' + msg)
 
-description: {weather[0][description]}""".encode('utf8').format(**weather)
+def GetAppPath():
+  """get application path"""
+  if getattr(sys, 'frozen', False):
+    return os.path.dirname(sys.executable)
+  elif __file__:
+    return os.path.dirname(__file__)
 
-print printweather if not '--raw' in cargs else weather
-
-exit(0)
+if __name__ == '__main__':
+  main()
