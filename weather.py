@@ -15,6 +15,7 @@ weather [ -f | -v | -c <city> ]
   -v, --verbose  verbose mode.
   -c, --city     city name ( weather -l Leeuwarden ).
                  The city name only needs to be set once.
+  -p, --proxy    set HTTP Proxy if using one.
 
 New data will only be fetched 15 minutes after the last call, before
 that the data will be read from local storage. (use -f to override this)
@@ -54,10 +55,11 @@ def main():
 def GetWeather(options):
   """return weather as string"""
   pickle_file = os.path.join(GetAppPath(), "weather.pickle")
-  PrintV('Last request %s minutes ago' % str(time.time() - GetLastTime() / 60))
+  PrintV('Last request %d minutes ago' % 
+      round((time.time() - GetLastTime()) / 60))
   if time.time() - GetLastTime() >= 900 or options.force:
     PrintV('making new request')
-    weather = FetchWeather(proxy=options.proxy, city=options.city)
+    weather = FetchWeather(proxy=GetProxy(options.proxy), city=options.city)
   else:
     PrintV('no need for new request')
     weather = pickle.load(open(pickle_file, 'rb'))['weather_data']
@@ -67,17 +69,22 @@ def FetchWeather(proxy='', city=''):
   """Fetch weather from api server"""
   PrintV('fetching weather')
   pickle_file = os.path.join(GetAppPath(), "weather.pickle")
-  response = requests.get(('http://api.openweathermap.org/data/2.5/weather?'
+  try:
+    response = requests.get(('http://api.openweathermap.org/data/2.5/weather?'
                            'q=%s&'
                            'units=metric&'
                            'APPID=5bfe42c795bc9f9598fce303e7aee224') % 
                             GetCity(city),
-                   proxies={'http': proxy})
-  data = json.loads(response.text)
-  pickle.dump({'lastrequest': time.time(),
-      'city': GetCity(city),
-      'weather_data': data}, open(pickle_file, 'wb'))
-  return data
+                 proxies={'http': proxy})
+    data = json.loads(response.text)
+    pickle.dump({'lastrequest': time.time(),
+        'city': GetCity(city),
+        'proxy': proxy,
+        'weather_data': data}, open(pickle_file, 'wb'))
+    return data
+  except requests.exceptions.ConnectionError:
+    print('Error connecting to server')
+    exit(0)
 
 def WeatherToString(weather):
   """Format the weather into a Printable string"""
@@ -103,6 +110,19 @@ def GetCity(city):
   else:
     return city
 
+def GetProxy(proxy):
+  """Get saved proxy address"""
+  pickle_file = os.path.join(GetAppPath(), "weather.pickle")
+  if proxy == '':
+    if os.path.exists(pickle_file):
+      proxy = pickle.load(open(pickle_file, 'rb'))['proxy']
+      PrintV('proxy = %s' % proxy)
+      if proxy:
+        return proxy
+  else:
+    return proxy
+
+
 def GetLastTime():
   """Last request time"""
   pickle_file = os.path.join(GetAppPath(), "weather.pickle")
@@ -125,3 +145,4 @@ def GetAppPath():
 
 if __name__ == '__main__':
   main()
+
