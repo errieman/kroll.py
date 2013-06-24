@@ -1,29 +1,14 @@
 #!/usr/bin/python
 """
-WEERHOOFDEN
--------------------------------------------------------------------------------
-get the current weather information at your location
-
-author: Erwin Hager <errieman@gmail.com>
-version: 0.9.11
-
---- Usage ---
-
-weather [ -f | -v | -c <city> ]
-
-  -f, --force    force new request.
-  -v, --verbose  verbose mode.
-  -c, --city     city name ( weather -l Leeuwarden ).
-                 The city name only needs to be set once.
-  -p, --proxy    set HTTP Proxy if using one.
-
-New data will only be fetched 15 minutes after the last call, before
+get the current weather information at your location.
+the data will only be fetched 15 minutes after the last call, before
 that the data will be read from local storage. (use -f to override this)
 """
 
-__version__ = '0.9.11'
+__version__ = '0.9.13'
 __author__ = 'Erwin Hager <errieman@gmail.com>'
 
+import argparse
 import requests
 import time
 import json
@@ -31,25 +16,26 @@ import sys
 import os
 import cPickle as pickle
 
-from optparse import OptionParser
-
 VERBOSE = False
 
 def main():
   """Main method"""
-  optp = OptionParser(add_help_option=False)
-  optp.add_option('-c', '--city')
-  optp.add_option('-v', '--verbose', action='store_true')
-  optp.add_option('-f', '--force', action='store_true')
-  optp.add_option('-p', '--proxy')
-  optp.add_option('-r', '--raw', action='store_true')
-  optp.add_option('-h', '--help', action='store_true')
-  (options, args) = optp.parse_args()
+  optp = argparse.ArgumentParser(description='Display local weather data.',
+      epilog=__doc__)
+  optp.add_argument('-c', '--city', 
+      help='Set city name (only needs to be set once)')
+  optp.add_argument('-v', '--verbose', action='store_true',
+      help='Enable verbose mode.')
+  optp.add_argument('-f', '--force', action='store_true',
+      help='Force new request.')
+  optp.add_argument('-p', '--proxy', default='',
+      help='Set proxy address (only needs to be set once)'
+           'use none to disable proxy.')
+  optp.add_argument('-r', '--raw', action='store_true',
+      help='Display raw data.')
+  options = optp.parse_args()
   global VERBOSE
   VERBOSE = options.verbose
-  if options.help:
-    print __doc__
-    return
   print GetWeather(options)
 
 def GetWeather(options):
@@ -70,6 +56,7 @@ def FetchWeather(proxy='', city=''):
   PrintV('fetching weather')
   pickle_file = os.path.join(GetAppPath(), "weather.pickle")
   try:
+    PrintV('using proxy: %s' % proxy)
     response = requests.get(('http://api.openweathermap.org/data/2.5/weather?'
                            'q=%s&'
                            'units=metric&'
@@ -102,7 +89,6 @@ def GetCity(city):
   if not city:
     if os.path.exists(pickle_file):
       city = pickle.load(open(pickle_file, 'rb'))['city']
-      PrintV('city = %s' % city)
       if city:
         return city
     print('No city name provided (use weather -c <city>)')
@@ -113,14 +99,15 @@ def GetCity(city):
 def GetProxy(proxy):
   """Get saved proxy address"""
   pickle_file = os.path.join(GetAppPath(), "weather.pickle")
-  if proxy == '':
+  if not proxy and not proxy == 'none':
     if os.path.exists(pickle_file):
       proxy = pickle.load(open(pickle_file, 'rb'))['proxy']
-      PrintV('proxy = %s' % proxy)
-      if proxy:
+      if proxy and not proxy == 'none':
         return proxy
+      return None
   else:
-    return proxy
+    return None
+  return proxy
 
 
 def GetLastTime():
