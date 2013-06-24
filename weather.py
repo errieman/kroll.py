@@ -5,7 +5,7 @@ WEERHOOFDEN
 get the current weather information at your location
 
 author: Erwin Hager <errieman@gmail.com>
-version: 0.9.10
+version: 0.9.11
 
 --- Usage ---
 
@@ -21,7 +21,7 @@ New data will only be fetched 15 minutes after the last call, before
 that the data will be read from local storage. (use -f to override this)
 """
 
-__version__ = '0.9.10'
+__version__ = '0.9.11'
 __author__ = 'Erwin Hager <errieman@gmail.com>'
 
 import requests
@@ -55,7 +55,7 @@ def main():
 def GetWeather(options):
   """return weather as string"""
   pickle_file = os.path.join(GetAppPath(), "weather.pickle")
-  PrintV('Last request %d minutes ago' % 
+  PrintV('Last request %d minutes ago' %
       round((time.time() - GetLastTime()) / 60))
   if time.time() - GetLastTime() >= 900 or options.force:
     PrintV('making new request')
@@ -73,7 +73,7 @@ def FetchWeather(proxy='', city=''):
     response = requests.get(('http://api.openweathermap.org/data/2.5/weather?'
                            'q=%s&'
                            'units=metric&'
-                           'APPID=5bfe42c795bc9f9598fce303e7aee224') % 
+                           'APPID=5bfe42c795bc9f9598fce303e7aee224') %
                             GetCity(city),
                  proxies={'http': proxy})
     data = json.loads(response.text)
@@ -89,11 +89,11 @@ def FetchWeather(proxy='', city=''):
 def WeatherToString(weather):
   """Format the weather into a Printable string"""
   PrintV('formatting weather')
-  return (u"temp: {main[temp]} \u00b0C ({main[temp_min]} \u00b0C - "
+  return (u"Temperature: {main[temp]} \u00b0C ({main[temp_min]} \u00b0C - "
           u"{main[temp_max]} \u00b0C)\n"
-          u"wind: {wind[speed]} Km/h ({wind[deg]}\u00b0)\n"
-          u"humidity: {main[humidity]}%\n\n"
-          u"description: {weather[0][description]}"
+          u"       Wind: {wind[speed]} Km/h ({wind[deg]}\u00b0)\n"
+          u"   Humidity: {main[humidity]}%\n\n"
+          u"Description: {weather[0][description]}"
           ).encode('utf8').format(**weather)
 
 def GetCity(city):
