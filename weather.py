@@ -5,7 +5,7 @@ the data will only be fetched 15 minutes after the last call, before
 that the data will be read from local storage. (use -f to override this)
 """
 
-__version__ = '0.9.13'
+__version__ = '0.9.21'
 __author__ = 'Erwin Hager <errieman@gmail.com>'
 
 import argparse
@@ -22,6 +22,8 @@ class Weather:
   def __init__(self, options):
     self.options = options
     self.pickle_file = os.path.join(self.GetAppPath(), "weather.pickle")
+    if self.options.city:
+      self.options.force = True
 
   def GetWeather(self):
     """return weather as string"""    
