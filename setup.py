@@ -10,7 +10,7 @@ requires = ['requests']
 
 setup(
     name='Kroll',
-    version='0.3.34',
+    version='0.3.38',
     description='CLI weather application',
     long_description=README,
     classifiers=[

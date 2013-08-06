@@ -6,6 +6,9 @@ import json
 import os
 import cPickle as pickle
 
+__version__ = '0.3.38'
+__author__ = 'Erwin Hager'
+
 class Weather:
   """Weather class"""
 
@@ -39,26 +42,27 @@ class Weather:
                              'APPID=5bfe42c795bc9f9598fce303e7aee224') %
                               self.GetCity(city),
                    proxies={'http': proxy})
-      data = json.loads(response.text)
-      pickle.dump({'lastrequest': time.time(),
-          'city': self.GetCity(city),
-          'proxy': proxy,
-          'weather_data': data}, open(self.pickle_file, 'wb'))
-      return data
     except requests.exceptions.ConnectionError:
       print('Error connecting to server. '
             'Make sure you have connection to the internet.')
       exit(0)
-    except json.exceptions.ValueError:
+    try:
+      data = json.loads(response.text)
+    except ValueError:
       print('Error parsing json data.')
       exit(0)
+    pickle.dump({'lastrequest': time.time(),
+        'city': self.GetCity(city),
+        'proxy': proxy,
+        'weather_data': data}, open(self.pickle_file, 'wb'))
+    return data
 
   def WeatherToString(self, weather):
     """Format the weather into a Printable string"""
     self.PrintV('formatting weather')
     return (u"Temperature: {temp} \u00b0C ({main[temp_min]} \u00b0C - "
             u"{main[temp_max]} \u00b0C)\n"
-            u"       Wind: {wind[speed] * 3} Km/h ({wind[deg]}\u00b0)\n"
+            u"       Wind: {wind[speed]} Km/h ({wind[deg]}\u00b0)\n"
             u"   Humidity: {main[humidity]}%\n\n"
             u"Description: {weather[0][description]}"
             ).encode('utf8').format(temp=int(weather['main']['temp']),

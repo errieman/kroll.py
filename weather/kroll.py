@@ -5,7 +5,7 @@ the data will only be fetched 15 minutes after the last call, before
 that the data will be read from local storage. (use -f to override this)
 """
 
-__version__ = '0.3.34'
+__version__ = '0.3.38'
 __author__ = 'Erwin Hager <errieman@gmail.com>'
 
 import argparse
