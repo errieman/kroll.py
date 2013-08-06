@@ -46,7 +46,11 @@ class Weather:
           'weather_data': data}, open(self.pickle_file, 'wb'))
       return data
     except requests.exceptions.ConnectionError:
-      print('Error connecting to server')
+      print('Error connecting to server. '
+            'Make sure you have connection to the internet.')
+      exit(0)
+    except json.exceptions.ValueError:
+      print('Error parsing json data.')
       exit(0)
 
   def WeatherToString(self, weather):
@@ -54,7 +58,7 @@ class Weather:
     self.PrintV('formatting weather')
     return (u"Temperature: {temp} \u00b0C ({main[temp_min]} \u00b0C - "
             u"{main[temp_max]} \u00b0C)\n"
-            u"       Wind: {wind[speed]} Km/h ({wind[deg]}\u00b0)\n"
+            u"       Wind: {wind[speed] * 3} Km/h ({wind[deg]}\u00b0)\n"
             u"   Humidity: {main[humidity]}%\n\n"
             u"Description: {weather[0][description]}"
             ).encode('utf8').format(temp=int(weather['main']['temp']),
