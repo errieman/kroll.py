@@ -13,7 +13,7 @@ import os
 from . import forecast, weather
 from os.path import expanduser
 
-__version__ = '0.3.44'
+__version__ = '0.3.46'
 
 # def GetAppPath():
 #   """get application path"""
@@ -23,8 +23,6 @@ __version__ = '0.3.44'
 
 def main():
   """Main method"""
-  reload(sys)
-  sys.setdefaultencoding("utf-8")
   optp = argparse.ArgumentParser(description='Display local weather data.',
       epilog=__doc__)
   optp.add_argument('-s', '--predict', action='store_true',

@@ -6,7 +6,7 @@ import json
 import os
 import cPickle as pickle
 
-__version__ = '0.3.44'
+__version__ = '0.3.46'
 
 class Weather:
   """Weather class"""
@@ -64,12 +64,13 @@ class Weather:
     """Format the weather into a Printable string"""
     self.PrintV('formatting weather')
     return (u"-----------{name}, {sys[country]}-----------\n"
-            u"Temperature: {temp} \u00b0C ({main[temp_min]} \u00b0C - "
-            u"{main[temp_max]} \u00b0C)\n"
-            u"       Wind: {wind[speed]} Km/h ({wind[deg]}\u00b0)\n"
+            u"Temperature: {temp} \N{DEGREE SIGN}C "
+            u"({main[temp_min]} \N{DEGREE SIGN}C - "
+            u"{main[temp_max]} \N{DEGREE SIGN}C)\n"
+            u"       Wind: {wind[speed]} Km/h ({wind[deg]}\N{DEGREE SIGN})\n"
             u"   Humidity: {main[humidity]}%\n\n"
             u"Description: {weather[0][description]}"
-            ).encode('utf8').format(temp=int(weather['main']['temp']),
+            ).format(temp=int(weather['main']['temp']),
                 **weather)
 
   def GetCity(self, city):
@@ -106,5 +107,5 @@ class Weather:
 
   def PrintV(self, msg):
     """verbose messages"""
-    if self.options.verbose:
+    if self.options.verbose:\
       print('* ' + msg)
