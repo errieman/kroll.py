@@ -10,7 +10,7 @@ requires = ['requests']
 
 setup(
     name='Kroll',
-    version='0.3.38',
+    version='0.3.44',
     description='CLI weather application',
     long_description=README,
     classifiers=[
@@ -22,11 +22,11 @@ setup(
     author_email='errieman@gmail.com',
     url='https://github.com/errieman/weather.py',
     keywords='weather cli forecast',
-    packages=find_packages(),
+    packages=['kroll'],
     include_package_data=True,
     zip_safe=False,
     entry_points="""
     [console_scripts]
-    weather = weather.kroll:main
+    weather = kroll.kroll:main
     """,
     install_requires=requires)
