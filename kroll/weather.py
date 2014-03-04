@@ -7,6 +7,7 @@ import os
 import cPickle as pickle
 
 __version__ = '0.3.46'
+__author__ = 'Erwin Hager'
 
 class Weather:
   """Weather class"""
@@ -47,8 +48,8 @@ class Weather:
       exit(0)
     try:
       data = json.loads(response.text)
-    except ValueError:
-      print('Error parsing json data.')
+    except ValueError, msg:
+      print('Error parsing json data: %s' % msg)
       exit(0)
     # self.SaveToPickle()    
     pickle.dump({'lastrequest': time.time(),
@@ -58,6 +59,7 @@ class Weather:
     return data
 
   def SaveToPickle(self):
+    """SaveToPickle"""
     pass
 
   def WeatherToString(self, weather):
@@ -102,8 +104,7 @@ class Weather:
     """Last request time"""
     if os.path.exists(self.pickle_file):
       return pickle.load(open(self.pickle_file, 'rb'))['lastrequest']
-    else:
-      return 901
+    return 901
 
   def PrintV(self, msg):
     """verbose messages"""
