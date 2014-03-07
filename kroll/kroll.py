@@ -10,16 +10,10 @@ import argparse
 import sys
 import os
 
-from . import forecast, weather
+import forecast, weather
 from os.path import expanduser
 
 __version__ = '0.3.46'
-
-# def GetAppPath():
-#   """get application path"""
-#   if getattr(sys, 'frozen', False) and not __file__:
-#     return os.path.dirname(sys.executable)
-#   return os.path.dirname(__file__)
 
 def main():
   """Main method"""
