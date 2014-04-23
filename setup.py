@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import os
+import sys
 
 from setuptools import setup, find_packages
 
@@ -7,6 +8,15 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 
 requires = ['requests']
+
+if sys.platform == 'darwin':
+ extra_options = dict(
+     setup_requires=['py2app'],
+     app=[mainscript],
+     # Cross-platform applications generally expect sys.argv to
+     # be used for opening files.
+     options=dict(py2app=dict(argv_emulation=True)),
+)
 
 setup(
     name='Kroll',

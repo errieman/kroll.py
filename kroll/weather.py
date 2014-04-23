@@ -9,7 +9,7 @@ import cPickle as pickle
 __version__ = '0.3.46'
 __author__ = 'Erwin Hager'
 
-class Weather:
+class Weather(object):
   """Weather class"""
 
   def __init__(self, options, apppath):
@@ -43,15 +43,14 @@ class Weather:
                               self.GetCity(city),
                    proxies={'http': proxy})
     except requests.exceptions.ConnectionError:
-      print('Error connecting to server. '
-            'Make sure you have connection to the internet.')
+      print ('Error connecting to server. '
+             'Make sure you are connected to the internet.')
       exit(0)
     try:
       data = json.loads(response.text)
     except ValueError, msg:
-      print('Error parsing json data: %s' % msg)
+      print 'Error parsing json data: %s' % msg
       exit(0)
-    # self.SaveToPickle()    
     pickle.dump({'lastrequest': time.time(),
         'city': self.GetCity(city),
         'proxy': self.GetProxy(self.options.proxy),
@@ -82,7 +81,7 @@ class Weather:
         city = pickle.load(open(self.pickle_file, 'rb'))['city']
         if city:
           return city
-      print('No city name provided (use weather -c <city>)')
+      print 'No city name provided (use weather -c <city>)'
       exit(0)
     else:
       return city
@@ -109,4 +108,4 @@ class Weather:
   def PrintV(self, msg):
     """verbose messages"""
     if self.options.verbose:\
-      print('* ' + msg)
+      print '* ' + msg
