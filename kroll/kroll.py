@@ -13,7 +13,7 @@ import os
 import forecast, weather
 from os.path import expanduser
 
-__version__ = '0.3.46'
+__version__ = '0.4.0'
 
 def main():
   """Main method"""

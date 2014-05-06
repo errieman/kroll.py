@@ -6,7 +6,7 @@ import json
 import os
 import cPickle as pickle
 
-__version__ = '0.3.46'
+__version__ = '0.4.0'
 __author__ = 'Erwin Hager'
 
 class Weather(object):
@@ -42,15 +42,13 @@ class Weather(object):
                              'APPID=5bfe42c795bc9f9598fce303e7aee224') %
                               self.GetCity(city),
                    proxies={'http': proxy})
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.ConnectionError, msg:
       print ('Error connecting to server. '
-             'Make sure you are connected to the internet.')
-      exit(0)
+             'Make sure you are connected to the internet. %s' % msg)
     try:
       data = json.loads(response.text)
     except ValueError, msg:
       print 'Error parsing json data: %s' % msg
-      exit(0)
     pickle.dump({'lastrequest': time.time(),
         'city': self.GetCity(city),
         'proxy': self.GetProxy(self.options.proxy),

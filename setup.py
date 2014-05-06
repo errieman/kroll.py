@@ -38,5 +38,6 @@ setup(
     entry_points="""
     [console_scripts]
     weather = kroll.kroll:main
+    forecast = kroll.kroll:main
     """,
     install_requires=requires)
